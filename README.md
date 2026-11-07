@@ -178,3 +178,22 @@ sudo "/Applications/Install macOS Tahoe.app/Contents/Resources/startosinstall" -
 - USBToolBox 0.2 trên Windows (`downloads/usbtoolbox`, lịch sử ở `usb.json`): N → P (bật cổng từng có thiết bị, binding companions bật) → K. XHCI 8D31 giữ 15 cổng: 1–6, 12–14, 16–21; EHCI giữ cổng 1 (hub). Kext: `USBToolBox.kext` + `UTBMap.kext`.
 - `python -I tools/build_config.py <Sample.plist> <smbios.json> <EFI/OC> --release`: bỏ `-v keepsyms debug`, `Target=3`, không SysReport, `Timeout=5`, ẩn mục phụ (Space để hiện Recovery/Reset NVRAM). Dùng file .efi từ gói OpenCore RELEASE.
 - Đang trên ESP Netac: `downloads/EFI-tahoe-release`. Bản debug đã cài được Tahoe: `downloads/EFI-on-netac-tahoe-debug-working`.
+
+## 11. Dùng EFI có sẵn trong repo (`EFI/`)
+
+Bản **Tahoe 26, OpenCore 1.0.8 RELEASE**, đã chạy trên máy này. **PlatformInfo để trống** — phải tự điền trước khi boot:
+
+1. Sinh serial MacPro7,1: `macserial -m MacPro7,1 -g -n 1` (trong gói OpenCore, `Utilities/macserial`) hoặc [GenSMBIOS](https://github.com/corpnewt/GenSMBIOS).
+2. Điền vào `smbios.example.json` (ROM = MAC card mạng, 12 ký tự hex; SystemUUID = UUID ngẫu nhiên) rồi sinh lại config:
+   ```sh
+   python -I tools/build_config.py <OpenCore>/Docs/Sample.plist smbios.example.json EFI/OC --release
+   <OpenCore>/Utilities/ocvalidate/ocvalidate EFI/OC/config.plist
+   ```
+   Hoặc sửa trực tiếp `PlatformInfo > Generic` bằng ProperTree.
+3. Chép `EFI/` vào phân vùng EFI (FAT32) của USB/ổ cứng.
+
+Lưu ý:
+- `UTBMap.kext` là USB map của **đúng board X99-TF này**; board khác hãy xoá `UTBMap.kext` + `USBToolBox.kext` và tự map.
+- SSDT là bản prebuilt Dortania, đã đối chiếu DSDT của X99-TF (BIOS 5.11).
+- Không có audio analog trên Tahoe; muốn dùng Sequoia thì thêm WhateverGreen + AppleALC, SMBIOS iMacPro1,1 (script tự thêm `agdpmod=pikera`).
+- Bản RELEASE không có log/verbose. Khi gỡ lỗi, chạy script **không** có `--release` và thay các file `.efi` bằng bản DEBUG.
