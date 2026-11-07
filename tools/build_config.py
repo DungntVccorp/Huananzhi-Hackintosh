@@ -10,7 +10,7 @@ import sys
 
 # Lilu first, then its plugins; anything not listed is appended after.
 KEXT_ORDER = ["Lilu", "VirtualSMC", "SMCProcessor", "SMCSuperIO", "WhateverGreen",
-              "AppleALC", "RestrictEvents", "RealtekRTL8111", "CpuTscSync", "NVMeFix",
+              "AppleALC", "SimpleHDA", "RestrictEvents", "RealtekRTL8111", "CpuTscSync", "NVMeFix",
               "USBToolBox", "UTBMap"]
 
 BOOTER_TRUE = {"AvoidRuntimeDefrag", "EnableSafeModeSlide", "EnableWriteUnprotector",
@@ -28,7 +28,9 @@ KERNEL_QUIRKS = {
 BOOT_ARGS = "-v keepsyms=1 debug=0x100 npci=0x2000"
 BOOT_ARGS_RELEASE = "npci=0x2000"  # after a stable install: no verbose, no debug
 # extra args only make sense when their kext is in the EFI (Tahoe build drops WhateverGreen)
-KEXT_ARGS = {"WhateverGreen": "agdpmod=pikera", "RestrictEvents": "revpatch=sbvmm"}
+KEXT_ARGS = {"WhateverGreen": "agdpmod=pikera", "RestrictEvents": "revpatch=sbvmm",
+             "AppleALC": "alcid=1",  # ALC892 layout; SimpleHDA restores AppleHDA on Tahoe
+             "SimpleHDA": "shda-lang=en"}
 
 
 def kext_entry(oc, name):
@@ -56,7 +58,8 @@ def build(sample, smbios, oc, release=False):
         if isinstance(v, bool):
             c["Booter"]["Quirks"][k] = k in BOOTER_TRUE
 
-    c["DeviceProperties"]["Add"] = {}
+    # Onboard Realtek NIC (RP03, bus 8) must be "built-in" so en0 is built-in: iCloud/iMessage need it.
+    c["DeviceProperties"]["Add"] = {"PciRoot(0x0)/Pci(0x1C,0x2)/Pci(0x0,0x0)": {"built-in": b"\x01"}}
     c["DeviceProperties"]["Delete"] = {}
 
     present = [x[:-5] for x in os.listdir(os.path.join(oc, "Kexts")) if x.endswith(".kext")]

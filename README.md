@@ -13,7 +13,7 @@ Tài liệu khảo sát phần cứng và cách build USB cài macOS từ Window
 | Ổ NVMe | Samsung PM981 512GB (144D:A808) | **KHÔNG hỗ trợ** | Xem mục 2 |
 | LAN | Realtek RTL8111 (10EC:8168) | Cần kext | RealtekRTL8111.kext |
 | LAN USB | Realtek RTL8153 (0BDA:8153) | Chưa rõ | Kiểm tra khi boot lần đầu |
-| Audio | Realtek ALC892 (10EC:0892) trên 8086:8D20 | AppleALC | Hỏng trên Tahoe 26 (xem mục 2) |
+| Audio | Realtek ALC892 (10EC:0892) trên 8086:8D20 | AppleALC + SimpleHDA | Chạy trên Tahoe 26 (`alcid=1`) |
 | Audio HDMI/DP | GPU (1002:AB38) | Native | |
 | USB | XHCI 8086:8D31, EHCI 8086:8D26 / 8D2D | Cần map | Map bằng USBToolBox từ Windows |
 | Wi-Fi/BT | Không có | — | |
@@ -33,7 +33,7 @@ Samsung PM981 nằm trong danh sách **không hỗ trợ** của Dortania: kerne
 | Phiên bản | Audio ALC892 | SMBIOS | Ghi chú |
 |---|---|---|---|
 | **Sequoia 15 (khuyến nghị)** | Chạy (AppleALC) | iMacPro1,1 | Mọi thứ hoạt động |
-| Tahoe 26 | **Mất** analog — AppleHDA bị Apple gỡ | MacPro7,1 (+RestrictEvents) | Chỉ còn audio HDMI/DP hoặc USB DAC; VoodooHDA là phương án tạm |
+| Tahoe 26 | Chạy (AppleALC + [SimpleHDA](https://github.com/laobamac/SimpleHDA) khôi phục AppleHDA, `alcid=1`) | MacPro7,1 (+RestrictEvents) | Apple gỡ AppleHDA nên cần SimpleHDA; yêu cầu `DisableLinkeditJettison` |
 
 Tahoe 26 là macOS Intel cuối cùng — không có bản nào mới hơn cho máy này.
 
@@ -149,7 +149,7 @@ Sau khi cài xong: chép thư mục `EFI` từ USB sang phân vùng EFI của �
 | Bản | Thư mục (`downloads/`, gitignored) | SMBIOS | Kext | Ghi chú |
 |---|---|---|---|---|
 | Sequoia 15.8.2 — **đã cài & boot OK** | `EFI-on-netac-before-tahoe` | iMacPro1,1 | + WhateverGreen, AppleALC | SecureBootModel Disabled |
-| **Tahoe 26 — đã cài & boot OK (2026-11-07)** | `EFI-tahoe` | MacPro7,1 | + RestrictEvents, bỏ WhateverGreen/AppleALC | `revpatch=sbvmm` cho OTA; không có audio analog |
+| **Tahoe 26 — đã cài & boot OK (2026-11-07)** | `EFI-tahoe` | MacPro7,1 | + RestrictEvents, bỏ WhateverGreen/AppleALC | `revpatch=sbvmm` cho OTA; audio analog bằng AppleALC + SimpleHDA (không vá system volume) |
 
 Serial: `downloads/smbios-*.json` (không commit). `tools/build_config.py` tự thêm `agdpmod=pikera` / `revpatch=sbvmm` khi WhateverGreen / RestrictEvents có trong EFI.
 
@@ -195,5 +195,6 @@ Bản **Tahoe 26, OpenCore 1.0.8 RELEASE**, đã chạy trên máy này. **Platf
 Lưu ý:
 - `UTBMap.kext` là USB map của **đúng board X99-TF này**; board khác hãy xoá `UTBMap.kext` + `USBToolBox.kext` và tự map.
 - SSDT là bản prebuilt Dortania, đã đối chiếu DSDT của X99-TF (BIOS 5.11).
-- Không có audio analog trên Tahoe; muốn dùng Sequoia thì thêm WhateverGreen + AppleALC, SMBIOS iMacPro1,1 (script tự thêm `agdpmod=pikera`).
+- Audio analog trên Tahoe: AppleALC 1.9.8 + SimpleHDA 1.0.1 (alpha, nạp qua OpenCore) với `alcid=1 shda-lang=en`; nếu cần tắt thêm `-shdaoff`. Chỉ dùng được `DisableLinkeditJettison=true`.
+- Card mạng onboard cần `DeviceProperties` `built-in=01` (`PciRoot(0x0)/Pci(0x1C,0x2)/Pci(0x0,0x0)`), nếu không iCloud/iMessage không đăng nhập được.
 - Bản RELEASE không có log/verbose. Khi gỡ lỗi, chạy script **không** có `--release` và thay các file `.efi` bằng bản DEBUG.
