@@ -149,7 +149,7 @@ Sau khi cài xong: chép thư mục `EFI` từ USB sang phân vùng EFI của �
 | Bản | Thư mục (`downloads/`, gitignored) | SMBIOS | Kext | Ghi chú |
 |---|---|---|---|---|
 | Sequoia 15.8.2 — **đã cài & boot OK** | `EFI-on-netac-before-tahoe` | iMacPro1,1 | + WhateverGreen, AppleALC | SecureBootModel Disabled |
-| **Tahoe 26 (đang dùng trên ESP Netac)** | `EFI-tahoe` | MacPro7,1 | + RestrictEvents, bỏ WhateverGreen/AppleALC | `revpatch=sbvmm` cho OTA; không có audio analog |
+| **Tahoe 26 — đã cài & boot OK (2026-11-07)** | `EFI-tahoe` | MacPro7,1 | + RestrictEvents, bỏ WhateverGreen/AppleALC | `revpatch=sbvmm` cho OTA; không có audio analog |
 
 Serial: `downloads/smbios-*.json` (không commit). `tools/build_config.py` tự thêm `agdpmod=pikera` / `revpatch=sbvmm` khi WhateverGreen / RestrictEvents có trong EFI.
 
