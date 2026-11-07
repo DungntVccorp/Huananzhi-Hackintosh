@@ -173,3 +173,8 @@ sudo "/Applications/Install macOS Tahoe.app/Contents/Resources/startosinstall" -
 - [Dortania – Storage không hỗ trợ (PM981)](https://dortania.github.io/Anti-Hackintosh-Buyers-Guide/Storage.html)
 - [AppleHDA trên Tahoe](https://github.com/perez987/AppleHDA-back-on-macOS-26-Tahoe)
 - [macrecovery recovery_urls.txt](https://github.com/acidanthera/OpenCorePkg/blob/master/Utilities/macrecovery/recovery_urls.txt)
+
+## 10. USB map & bản release (2026-11-07)
+- USBToolBox 0.2 trên Windows (`downloads/usbtoolbox`, lịch sử ở `usb.json`): N → P (bật cổng từng có thiết bị, binding companions bật) → K. XHCI 8D31 giữ 15 cổng: 1–6, 12–14, 16–21; EHCI giữ cổng 1 (hub). Kext: `USBToolBox.kext` + `UTBMap.kext`.
+- `python -I tools/build_config.py <Sample.plist> <smbios.json> <EFI/OC> --release`: bỏ `-v keepsyms debug`, `Target=3`, không SysReport, `Timeout=5`, ẩn mục phụ (Space để hiện Recovery/Reset NVRAM). Dùng file .efi từ gói OpenCore RELEASE.
+- Đang trên ESP Netac: `downloads/EFI-tahoe-release`. Bản debug đã cài được Tahoe: `downloads/EFI-on-netac-tahoe-debug-working`.

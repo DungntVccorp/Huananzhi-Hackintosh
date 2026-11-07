@@ -26,6 +26,7 @@ KERNEL_QUIRKS = {
 
 # npci=0x2000: Huananzhi BIOS hides Above 4G Decoding; Dortania's substitute for X99 PCI hangs
 BOOT_ARGS = "-v keepsyms=1 debug=0x100 npci=0x2000"
+BOOT_ARGS_RELEASE = "npci=0x2000"  # after a stable install: no verbose, no debug
 # extra args only make sense when their kext is in the EFI (Tahoe build drops WhateverGreen)
 KEXT_ARGS = {"WhateverGreen": "agdpmod=pikera", "RestrictEvents": "revpatch=sbvmm"}
 
@@ -40,7 +41,7 @@ def kext_entry(oc, name):
             "PlistPath": "Contents/Info.plist"}
 
 
-def build(sample, smbios, oc):
+def build(sample, smbios, oc, release=False):
     with open(sample, "rb") as f:
         c = plistlib.load(f)
 
@@ -67,12 +68,18 @@ def build(sample, smbios, oc):
     c["Kernel"]["Quirks"].update(KERNEL_QUIRKS)
 
     m = c["Misc"]
-    # show "macOS Base System" without pressing Space; Timeout 0 = wait, never auto-boot Windows
-    m["Boot"].update({"HideAuxiliary": False, "Timeout": 0})
-    m["Debug"].update({"AppleDebug": True, "ApplePanic": True, "DisableWatchDog": True,
-                       # 67 = enable + onscreen + file (opencore-*.txt on ESP root);
-                       # SysReport dumps ACPI/audio/etc to ESP\SysReport (DEBUG build only)
-                       "Target": 67, "SysReport": True})
+    if release:
+        # Space shows Recovery/Reset NVRAM; auto-boot the default (last macOS) after 5s
+        m["Boot"].update({"HideAuxiliary": True, "Timeout": 5})
+        m["Debug"].update({"AppleDebug": False, "ApplePanic": True, "DisableWatchDog": True,
+                           "Target": 3, "SysReport": False})
+    else:
+        # show "macOS Base System" without pressing Space; Timeout 0 = wait, never auto-boot Windows
+        m["Boot"].update({"HideAuxiliary": False, "Timeout": 0})
+        m["Debug"].update({"AppleDebug": True, "ApplePanic": True, "DisableWatchDog": True,
+                           # 67 = enable + onscreen + file (opencore-*.txt on ESP root);
+                           # SysReport dumps ACPI/audio/etc to ESP\SysReport (DEBUG build only)
+                           "Target": 67, "SysReport": True})
     m["Security"].update({"AllowSetDefault": True, "BlacklistAppleUpdate": True,
                           "DmgLoading": "Signed", "ExposeSensitiveData": 6,
                           "ScanPolicy": 0, "SecureBootModel": "Disabled", "Vault": "Optional"})
@@ -84,7 +91,8 @@ def build(sample, smbios, oc):
                    "Path": t, "RealPath": False, "TextMode": False} for t in tools]
 
     nv = c["NVRAM"]["Add"]["7C436110-AB2A-4BBB-A880-FE41995C9F82"]
-    nv["boot-args"] = " ".join([BOOT_ARGS] + [a for k, a in KEXT_ARGS.items() if k in present])
+    base = BOOT_ARGS_RELEASE if release else BOOT_ARGS
+    nv["boot-args"] = " ".join([base] + [a for k, a in KEXT_ARGS.items() if k in present])
     nv["csr-active-config"] = bytes(4)
     nv["prev-lang:kbd"] = b""
 
@@ -120,4 +128,4 @@ def build(sample, smbios, oc):
 
 
 if __name__ == "__main__":
-    build(*sys.argv[1:4])
+    build(*sys.argv[1:4], release="--release" in sys.argv[4:])
